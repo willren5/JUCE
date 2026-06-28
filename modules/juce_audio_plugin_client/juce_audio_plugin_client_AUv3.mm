@@ -1174,6 +1174,16 @@ private:
        #endif
     }
 
+    static String makeSafeAUParameterNodeIdentifier (const String& identifier)
+    {
+        // AUParameterTree reserves "." as a hierarchy delimiter and rejects nodes
+        // containing it. Keep the original JUCE parameter ID and AU address stable;
+        // only sanitize the AUv3 tree node identifier used by Apple's factory API.
+        return identifier.replaceCharacter ('.', '_')
+                         + "_"
+                         + String::toHexString (identifier.hashCode64());
+    }
+
     static auto createParameter (const AudioProcessorParameter& parameter)
     {
         const String name (parameter.getName (512));
@@ -1246,7 +1256,7 @@ private:
         @try
         {
             // Create methods in AUParameterTree return unretained objects (!) -> see Apple header AUAudioUnitImplementation.h
-            param.reset ([[AUParameterTree createParameterWithIdentifier: juceStringToNS (getParameterIdentifier())
+            param.reset ([[AUParameterTree createParameterWithIdentifier: juceStringToNS (makeSafeAUParameterNodeIdentifier (getParameterIdentifier()))
                                                                     name: juceStringToNS (name)
                                                                  address: address
                                                                      min: 0.0f
@@ -1284,7 +1294,7 @@ private:
             @try
             {
                 // Create methods in AUParameterTree return unretained objects (!) -> see Apple header AUAudioUnitImplementation.h
-                [nodeArray.get() addObject: [[AUParameterTree createGroupWithIdentifier: juceStringToNS (group.getID())
+                [nodeArray.get() addObject: [[AUParameterTree createGroupWithIdentifier: juceStringToNS (makeSafeAUParameterNodeIdentifier (group.getID()))
                                                                                    name: juceStringToNS (group.getName())
                                                                                children: r.nodeArray.get()] retain]];
             }
