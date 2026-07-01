@@ -38,7 +38,30 @@ namespace juce
 struct WebBrowserComponent::Impl::Platform  : public PlatformInterface
 {
     class Win32WebView;
+    class NoWebView;
     class WebView2;
+};
+
+//==============================================================================
+class WebBrowserComponent::Impl::Platform::NoWebView final : public WebBrowserComponent::Impl::PlatformInterface
+{
+public:
+    void goToURL (const String&, const StringArray*, const MemoryBlock*) override {}
+    void goBack() override {}
+    void goForward() override {}
+    void stop() override {}
+    void refresh() override {}
+    void evaluateJavascript (const String&, WebBrowserComponent::EvaluationCallback callback) override
+    {
+        if (callback)
+            callback (WebBrowserComponent::EvaluationResult::Error {
+                WebBrowserComponent::EvaluationResult::Error::Type::unknown,
+                "WebView2 is unavailable"
+            });
+    }
+    void setWebViewSize (int, int) override {}
+    void checkWindowAssociation() override {}
+    void fallbackPaint (Graphics& g) override { g.fillAll (Colours::white); }
 };
 
 //==============================================================================
@@ -1311,6 +1334,10 @@ auto WebBrowserComponent::Impl::createAndInitPlatformDependentPart (WebBrowserCo
         if (auto constructed = Platform::WebView2::tryConstruct (impl.owner, options, userScripts))
             return constructed;
        #endif
+
+        // FAD patch: never fall back to the legacy IE ActiveX backend after a caller
+        // explicitly requests WebView2. WebViewHost handles the unavailable case.
+        return std::make_unique<Platform::NoWebView>();
     }
 
     return std::make_unique<Platform::Win32WebView> (impl.owner, options.getUserAgent());
