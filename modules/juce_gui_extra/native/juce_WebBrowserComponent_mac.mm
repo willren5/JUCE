@@ -878,9 +878,7 @@ public:
                 [config.get() setURLSchemeHandler:webViewDelegate.get() forURLScheme:@"juce"];
         }
 
-       #if JUCE_DEBUG
-        [preferences setValue: @(true) forKey: @"developerExtrasEnabled"];
-       #endif
+        [preferences setValue: @(false) forKey: @"developerExtrasEnabled"];
 
        #if JUCE_MAC
         auto& webviewClass = [&]() -> auto&
@@ -904,6 +902,11 @@ public:
        #else
         webView.reset ([[WKWebView alloc] initWithFrame: CGRectMake (0, 0, 100.0f, 100.0f)
                                           configuration: config.get()]);
+       #endif
+
+       #if JUCE_MAC
+        if (@available (macOS 13.3, *))
+            [webView.get() setInspectable: NO];
        #endif
 
         if (const auto userAgent = browserOptions.getUserAgent(); userAgent.isNotEmpty())

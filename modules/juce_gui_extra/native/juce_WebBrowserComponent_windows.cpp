@@ -1042,12 +1042,17 @@ private:
 
         if (settings != nullptr)
         {
-           #if ! JUCE_DEBUG
             settings->put_AreDevToolsEnabled (false);
-           #endif
-
+            settings->put_AreDefaultContextMenusEnabled (false);
+            settings->put_IsZoomControlEnabled (false);
             settings->put_IsStatusBarEnabled (! preferences.getWinWebView2BackendOptions().getIsStatusBarDisabled());
             settings->put_IsBuiltInErrorPageEnabled (! preferences.getWinWebView2BackendOptions().getIsBuiltInErrorPageDisabled());
+
+            ComSmartPtr<ICoreWebView2Settings3> settings3;
+            settings.QueryInterface (settings3);
+
+            if (settings3 != nullptr)
+                settings3->put_AreBrowserAcceleratorKeysEnabled (false);
 
             if (userAgent.isNotEmpty())
             {
